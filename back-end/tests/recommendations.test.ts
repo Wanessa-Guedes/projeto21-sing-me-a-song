@@ -7,7 +7,7 @@ beforeEach(async () => {
     await prisma.$executeRaw`TRUNCATE TABLE recommendations;`;
 });
 
-describe("Tests tests", () => {
+describe("Recommendations tests", () => {
 
     it("Create Recommendation Success - name, youtubeLink correct insert exxpect 201", async () => {
         const recommendation = createRecommendationFactory.createRecommendation();
@@ -19,9 +19,20 @@ describe("Tests tests", () => {
         expect(isRecommendationRegistered).not.toBeNull();
     })
 
-    it("Create Recommendation Fail - body not send 422", async () => {
+    it("Create Recommendation Fail - body not send expect 422", async () => {
         const result = await supertest(app).post('/recommendations').send({});
         expect(result.status).toBe(422);
     })
 
+    it("Add a pontuation on Recommendation Succes - expect 200", async () => {
+        const recommendation = await createRecommendationFactory.createRecommendationWithScore(1);
+        const id = recommendation.id;
+        const result = await supertest(app).post(`/recommendations/${id}/upvote`);
+        expect(result.status).toBe(200);
+    })
+
 })
+
+afterAll(async () => {
+    await prisma.$disconnect();
+});
