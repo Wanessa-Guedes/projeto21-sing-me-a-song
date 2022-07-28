@@ -9,8 +9,9 @@ beforeEach(async () => {
 });
 
 describe("Recommendations tests", () => {
-  it("Create Recommendation Success - name, youtubeLink correct insert exxpect 201", async () => {
-    const recommendation = createRecommendationFactory.createRecommendation();
+  it("Create Recommendation Success - name, youtubeLink correct insert expect 201", async () => {
+    const recommendation =
+      createRecommendationFactory.createRecommendationData();
     const result = await supertest(app)
       .post("/recommendations")
       .send(recommendation);
@@ -23,6 +24,33 @@ describe("Recommendations tests", () => {
 
   it("Create Recommendation Fail - body not send expect 422", async () => {
     const result = await supertest(app).post("/recommendations").send({});
+    expect(result.status).toBe(422);
+  });
+
+  it("Create Recommendation FAIL - Data already registered expect 409", async () => {
+    const recommendation =
+      createRecommendationFactory.createRecommendationData();
+    const createRecommendationInDB =
+      await createRecommendationFactory.createRecommendation(recommendation);
+
+    const result = await supertest(app).post("/recommendations").send({
+      name: createRecommendationInDB.name,
+      youtubeLink: createRecommendationInDB.youtubeLink,
+    });
+    expect(result.status).toBe(409);
+  });
+
+  it("Create Recommendation FAIL - Invalid Link expect 422", async () => {
+    const recommendation =
+      createRecommendationFactory.createRecommendationData();
+    const recommendationWrongLink = {
+      ...recommendation,
+      youtubeLink: `www.teste.com`,
+    };
+
+    const result = await supertest(app)
+      .post("/recommendations")
+      .send({ recommendationWrongLink });
     expect(result.status).toBe(422);
   });
 
@@ -40,6 +68,12 @@ describe("Recommendations tests", () => {
     expect(response.score).toBe(1);
   });
 
+  it("Add a pontuation - FAIL (Invalid ID) - expect 404", async () => {
+    const id = 100;
+    const result = await supertest(app).post(`/recommendations/${id}/upvote`);
+    expect(result.status).toBe(404);
+  });
+
   it("Remove a pontuation on Recommendation Succes - expect 200", async () => {
     const recommendation =
       await createRecommendationFactory.createRecommendationsWithScore(1);
@@ -52,6 +86,26 @@ describe("Recommendations tests", () => {
       },
     });
     expect(response.score).toBe(-1);
+  });
+
+  it("Remove a pontuation and deleted because is less than -5 on Recommendation Succes - expect 200", async () => {
+    const recommendation =
+      await createRecommendationFactory.createOneRecommendationWithScore(-5);
+    const id = recommendation.id;
+    const result = await supertest(app).post(`/recommendations/${id}/downvote`);
+    expect(result.status).toBe(200);
+    const response = await prisma.recommendation.findUnique({
+      where: {
+        id,
+      },
+    });
+    expect(response).toBeNull();
+  });
+
+  it("Remove a pontuation - FAIL (Invalid ID) - expect 404", async () => {
+    const id = 100;
+    const result = await supertest(app).post(`/recommendations/${id}/downvote`);
+    expect(result.status).toBe(404);
   });
 
   it("GET last 10 recommendations - Success - expect 200", async () => {

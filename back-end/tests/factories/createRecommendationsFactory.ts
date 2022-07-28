@@ -5,13 +5,21 @@ import { Recommendation } from "@prisma/client";
 
 type CreateRecommendationWithScore = Omit<Recommendation, "id">;
 
-function createRecommendation() {
+function createRecommendationData() {
   const recommendation: CreateRecommendationData = {
     name: faker.lorem.words(),
     youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
   };
 
   return recommendation;
+}
+
+async function createRecommendation(recommendation: CreateRecommendationData) {
+  const result = await prisma.recommendation.create({
+    data: recommendation,
+  });
+
+  return result;
 }
 
 async function createRecommendationsWithScore(qte: number) {
@@ -35,7 +43,23 @@ async function createRecommendationsWithScore(qte: number) {
   return result;
 }
 
+async function createOneRecommendationWithScore(score: number) {
+  const recommendation: CreateRecommendationWithScore = {
+    name: faker.lorem.words(),
+    youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+    score,
+  };
+
+  const result = await prisma.recommendation.create({
+    data: recommendation,
+  });
+
+  return result;
+}
+
 export const createRecommendationFactory = {
-  createRecommendation,
+  createRecommendationData,
   createRecommendationsWithScore,
+  createRecommendation,
+  createOneRecommendationWithScore,
 };
