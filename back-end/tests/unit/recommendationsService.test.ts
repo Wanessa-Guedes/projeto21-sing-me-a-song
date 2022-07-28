@@ -85,5 +85,92 @@ describe("Recommendations Unit tests (Service)", () => {
       "increment"
     );
   });
-  it("get all recommendations - Success", async () => {});
+  it("get all recommendations - Success", async () => {
+    const recommendation: Recommendation[] = [
+      {
+        id: 1,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: 1,
+      },
+    ];
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValueOnce(recommendation);
+    const result = await recommendationService.get();
+    expect(result).toEqual(recommendation);
+  });
+  it("get top recommendations - Success", async () => {
+    const recommendation: Recommendation[] = [
+      {
+        id: 1,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: 1,
+      },
+    ];
+    jest
+      .spyOn(recommendationRepository, "getAmountByScore")
+      .mockResolvedValueOnce(recommendation);
+    const result = await recommendationService.getTop(10);
+    expect(result).toEqual(recommendation);
+  });
+  it("get recommendation by id", async () => {
+    const recommendation: Recommendation = {
+      id: 1,
+      name: faker.lorem.words(),
+      youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+      score: 1,
+    };
+    jest
+      .spyOn(recommendationRepository, "find")
+      .mockResolvedValueOnce(recommendation);
+    const result = await recommendationService.getById(recommendation.id);
+    expect(result).toEqual(recommendation);
+  });
+  it("get recommendation by id FAIL - Not found error", async () => {
+    const recommendation: Recommendation = {
+      id: 1,
+      name: faker.lorem.words(),
+      youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+      score: 1,
+    };
+    jest.spyOn(recommendationRepository, "find").mockResolvedValueOnce(null);
+    await expect(
+      recommendationService.getById(recommendation.id)
+    ).rejects.toEqual({
+      message: "",
+      type: "not_found",
+    });
+  });
+  // TODO: VOLTAR AQUI
+  it("get random  -Songs with score bigger than 10 Success", async () => {
+    const recommendation: Recommendation[] = [
+      {
+        id: 1,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: 1,
+      },
+      {
+        id: 2,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: 25,
+      },
+      {
+        id: 3,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: -5,
+      },
+    ];
+    jest.spyOn(Math, "random").mockReturnValue(0.8);
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValueOnce([recommendation[1]]);
+    const result = await recommendationService.getRandom();
+    console.log("result", result);
+    expect(result).toEqual(recommendation[1]);
+  });
 });
