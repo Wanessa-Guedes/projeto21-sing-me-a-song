@@ -5,7 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "dotenv -e .env.test prisma migrate dev && NODE_OPTIONS=--experimental-vm-modules dotenv -e .env.test jest -- -i",
+    "test:integration": "dotenv -e .env.test prisma migrate dev && NODE_OPTIONS=--experimental-vm-modules dotenv -e .env.test jest -- -i --watchAll --testPathPattern=tests/integration",
+    "test:unit": "dotenv -e .env.test prisma migrate dev && NODE_OPTIONS=--experimental-vm-modules dotenv -e .env.test jest -- -i --coverage --watchAll --testPathPattern=tests/unit",
     "build": "tsc",
     "start": "node ./dist/src/server.js",
     "dev": "nodemon ./src/server.ts",
