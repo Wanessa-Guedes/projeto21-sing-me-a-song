@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-describe("insert recommendation", () => {
+describe("home page tests e2e", () => {
   beforeEach(() => {
     cy.resetDatabase();
     cy.insertDatabase();
