@@ -5,7 +5,6 @@
       "jest/expect-expect": "off"
     },
     "eslint.workingDirectories": [
-        "./back-end",
         "./front-end"
     ],
     "parser": "@babel/eslint-parser",
