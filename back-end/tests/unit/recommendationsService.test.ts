@@ -17,7 +17,8 @@ describe("Recommendations Unit tests (Service)", () => {
     jest.clearAllMocks();
     jest.resetAllMocks();
   });
-  it("if score less than -5 should delete the recommendation", async () => {
+
+  it("Should delete the recommendation if score less than -5", async () => {
     const recommendation: Recommendation = {
       id: 1,
       name: faker.lorem.words(),
@@ -36,7 +37,7 @@ describe("Recommendations Unit tests (Service)", () => {
     expect(recommendationRepository.remove).toBeCalledWith(recommendation.id);
   });
 
-  it("Insert a recommendation", async () => {
+  it("Should Insert a recommendation", async () => {
     const recommendation: CreateRecommendationData = {
       name: faker.lorem.words(),
       youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
@@ -49,8 +50,8 @@ describe("Recommendations Unit tests (Service)", () => {
     expect(recommendationRepository.create).toBeCalledTimes(1);
     expect(recommendationRepository.create).toBeCalledWith(recommendation);
   });
-  // TODO: Entender pq deu certo...
-  it("Insert a recommendation fails -  conflic (Recommendations names must be unique)", async () => {
+
+  it("Should Insert a recommendation fails -  conflic (Recommendations names must be unique)", async () => {
     const recommendation: Recommendation = {
       id: 1,
       name: faker.lorem.words(),
@@ -65,7 +66,8 @@ describe("Recommendations Unit tests (Service)", () => {
       type: "conflict",
     });
   });
-  it("Upvote Success", async () => {
+
+  it("Should Upvote Success", async () => {
     const recommendation: Recommendation = {
       id: 1,
       name: faker.lorem.words(),
@@ -85,7 +87,45 @@ describe("Recommendations Unit tests (Service)", () => {
       "increment"
     );
   });
-  it("get all recommendations - Success", async () => {
+
+  it("Should Upvote - FAIL - Not a recommendation with this ID", async () => {
+    jest.spyOn(recommendationRepository, "find").mockResolvedValueOnce(null);
+    await expect(recommendationService.upvote(1)).rejects.toEqual({
+      message: "",
+      type: "not_found",
+    });
+  });
+
+  it("Should downvote Success", async () => {
+    const recommendation: Recommendation = {
+      id: 1,
+      name: faker.lorem.words(),
+      youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+      score: 3,
+    };
+    jest
+      .spyOn(recommendationRepository, "find")
+      .mockResolvedValueOnce(recommendation);
+    jest
+      .spyOn(recommendationRepository, "updateScore")
+      .mockResolvedValueOnce(recommendation);
+    await recommendationService.downvote(recommendation.id);
+    expect(recommendationRepository.updateScore).toBeCalledTimes(1);
+    expect(recommendationRepository.updateScore).toBeCalledWith(
+      recommendation.id,
+      "decrement"
+    );
+  });
+
+  it("Should downvote - FAIL - Not a recommendation with this ID", async () => {
+    jest.spyOn(recommendationRepository, "find").mockResolvedValueOnce(null);
+    await expect(recommendationService.downvote(1)).rejects.toEqual({
+      message: "",
+      type: "not_found",
+    });
+  });
+
+  it("Should get recommendations - Success", async () => {
     const recommendation: Recommendation[] = [
       {
         id: 1,
@@ -100,7 +140,8 @@ describe("Recommendations Unit tests (Service)", () => {
     const result = await recommendationService.get();
     expect(result).toEqual(recommendation);
   });
-  it("get top recommendations - Success", async () => {
+
+  it("Should get top recommendations - Success", async () => {
     const recommendation: Recommendation[] = [
       {
         id: 1,
@@ -115,6 +156,7 @@ describe("Recommendations Unit tests (Service)", () => {
     const result = await recommendationService.getTop(10);
     expect(result).toEqual(recommendation);
   });
+
   it("get recommendation by id", async () => {
     const recommendation: Recommendation = {
       id: 1,
@@ -128,6 +170,7 @@ describe("Recommendations Unit tests (Service)", () => {
     const result = await recommendationService.getById(recommendation.id);
     expect(result).toEqual(recommendation);
   });
+
   it("get recommendation by id FAIL - Not found error", async () => {
     const recommendation: Recommendation = {
       id: 1,
@@ -144,7 +187,7 @@ describe("Recommendations Unit tests (Service)", () => {
     });
   });
   // TODO: VOLTAR AQUI
-  it("get random  -Songs with score bigger than 10 Success", async () => {
+  it("Should get random  - Songs with score bigger than 10 - Success", async () => {
     const recommendation: Recommendation[] = [
       {
         id: 1,
@@ -169,8 +212,11 @@ describe("Recommendations Unit tests (Service)", () => {
     jest
       .spyOn(recommendationRepository, "findAll")
       .mockResolvedValueOnce([recommendation[1]]);
-    const result = await recommendationService.getRandom();
-    console.log("result", result);
-    expect(result).toEqual(recommendation[1]);
+    await recommendationService.getRandom();
+    expect(recommendationRepository.findAll).toBeCalledTimes(1);
+    expect(recommendationRepository.findAll).toBeCalledWith({
+      score: 10,
+      scoreFilter: "lte",
+    });
   });
 });
