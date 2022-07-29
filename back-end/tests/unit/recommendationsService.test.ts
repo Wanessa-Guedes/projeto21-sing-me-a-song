@@ -1,8 +1,4 @@
 /* eslint-disable no-undef */
-// /// <reference types="@types/jest" />
-
-// import { faker } from "@faker-js/faker";
-// import { prisma } from "../../src/database.js";
 import { jest } from "@jest/globals";
 import { Recommendation } from "@prisma/client";
 import { faker } from "@faker-js/faker";
@@ -186,7 +182,7 @@ describe("Recommendations Unit tests (Service)", () => {
       type: "not_found",
     });
   });
-  // TODO: VOLTAR AQUI
+
   it("Should get random  - Songs with score bigger than 10 - Success", async () => {
     const recommendation: Recommendation[] = [
       {
@@ -218,5 +214,80 @@ describe("Recommendations Unit tests (Service)", () => {
       score: 10,
       scoreFilter: "lte",
     });
+  });
+
+  it("Should get random  - Songs with score lower than 10 and higher than -5 - Success", async () => {
+    const recommendation: Recommendation[] = [
+      {
+        id: 1,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: 1,
+      },
+      {
+        id: 2,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: 25,
+      },
+      {
+        id: 3,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: -5,
+      },
+    ];
+    jest.spyOn(Math, "random").mockReturnValue(0.3);
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValueOnce([recommendation[0], recommendation[2]]);
+    await recommendationService.getRandom();
+    expect(recommendationRepository.findAll).toBeCalledTimes(1);
+    expect(recommendationRepository.findAll).toBeCalledWith({
+      score: 10,
+      scoreFilter: "gt",
+    });
+  });
+
+  it("Should get random all recommendations (ALL SCORES BIGGER THAN 10) - Success", async () => {
+    const recommendation: Recommendation[] = [
+      {
+        id: 1,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: 20,
+      },
+      {
+        id: 2,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: 25,
+      },
+      {
+        id: 3,
+        name: faker.lorem.words(),
+        youtubeLink: `https://www.youtube.com/${faker.random.alpha()}`,
+        score: 33,
+      },
+    ];
+    jest.spyOn(Math, "random").mockReturnValue(0.3);
+    jest.spyOn(Math, "floor").mockReturnValue(0.3);
+    jest.spyOn(recommendationRepository, "findAll").mockResolvedValueOnce([]);
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValueOnce(recommendation);
+    await recommendationService.getRandom();
+    expect(recommendationRepository.findAll).toBeCalledTimes(2);
+  });
+
+  it("Should get error on random - FAIL - None recommendation", async () => {
+    jest.spyOn(Math, "random").mockReturnValue(0.3);
+    jest.spyOn(recommendationRepository, "findAll").mockResolvedValueOnce([]);
+    jest.spyOn(recommendationRepository, "findAll").mockResolvedValueOnce([]);
+    await expect(recommendationService.getRandom()).rejects.toEqual({
+      message: "",
+      type: "not_found",
+    });
+    expect(recommendationRepository.findAll).toBeCalledTimes(2);
   });
 });
