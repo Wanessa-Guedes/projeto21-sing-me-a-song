@@ -64,4 +64,16 @@ describe("insert recommendation", () => {
       cy.get("div:last").should("have.text", "-1");
     });
   });
+  it("should exclude the recommendation if score < -5", () => {
+    cy.visit("http://localhost:3000/");
+    cy.get(`article:first`).within(() => {
+      cy.get("div:last").should("have.text", "0");
+    });
+    for (let i = 0; i < 6; i++) {
+      cy.get(`article:first`).within(() => {
+        cy.get("svg:last").click();
+      });
+    }
+    cy.get(`article`).should("have.length", 2);
+  });
 });
